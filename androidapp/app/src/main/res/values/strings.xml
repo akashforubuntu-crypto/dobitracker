@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">DobiTracker</string>
+    <string name="device_id_hint">Enter your Device ID</string>
+    <string name="verify_button">Verify Device</string>
+    <string name="contact_admin_button">Contact Admin</string>
+    <string name="status_text">Please enter your Device ID</string>
+    <string name="notification_channel_name">DobiTracker Notifications</string>
+    <string name="notification_channel_description">Notifications for DobiTracker service</string>
+</resources>
