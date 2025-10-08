@@ -3,6 +3,7 @@ const { createNotificationsTable } = require('../src/models/notificationModel');
 const { createDocumentsTable } = require('../src/models/documentModel');
 const { createBlogsTable } = require('../src/models/blogModel');
 const { createPasswordResetsTable } = require('../src/models/passwordResetModel');
+const { createDeviceStatusTable } = require('../src/models/deviceStatusModel');
 
 const initTables = async () => {
   try {
@@ -14,6 +15,7 @@ const initTables = async () => {
     await createDocumentsTable();
     await createBlogsTable();
     await createPasswordResetsTable();
+    await createDeviceStatusTable();
     
     console.log('All database tables initialized successfully');
   } catch (error) {
