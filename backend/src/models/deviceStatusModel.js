@@ -20,7 +20,7 @@ const createDeviceStatusTable = async () => {
     console.error('Error creating device status table:', err);
   }
 };
-
+//jgjskjgjh
 const updateDeviceHeartbeat = async (deviceId) => {
   const query = `
     INSERT INTO device_status (device_id, is_online, last_heartbeat, last_notification_sync)
