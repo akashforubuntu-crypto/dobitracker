@@ -119,6 +119,85 @@ const updatePermissionStatus = async (deviceId, status) => {
   }
 };
 
+const getAllUsers = async () => {
+  const query = `
+    SELECT 
+      id, 
+      name, 
+      email, 
+      role, 
+      device_id, 
+      android_id, 
+      created_at, 
+      permission_status
+    FROM users 
+    ORDER BY created_at DESC
+  `;
+  
+  try {
+    const result = await db.query(query);
+    return result.rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const getAllDevices = async () => {
+  const query = `
+    SELECT 
+      u.device_id,
+      u.name as user_name,
+      u.permission_status,
+      u.created_at,
+      ds.is_online,
+      ds.last_heartbeat,
+      ds.last_notification_sync
+    FROM users u
+    LEFT JOIN device_status ds ON u.device_id = ds.device_id
+    WHERE u.device_id IS NOT NULL
+    ORDER BY u.created_at DESC
+  `;
+  
+  try {
+    const result = await db.query(query);
+    return result.rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const updateUser = async (userId, userData) => {
+  const { name, email, role } = userData;
+  
+  const query = `
+    UPDATE users 
+    SET name = $1, email = $2, role = $3
+    WHERE id = $4
+    RETURNING id, name, email, role, device_id, android_id, created_at, permission_status
+  `;
+  
+  const values = [name, email, role, userId];
+  
+  try {
+    const result = await db.query(query, values);
+    return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
+
+const deleteUser = async (userId) => {
+  const query = 'DELETE FROM users WHERE id = $1 RETURNING id';
+  const values = [userId];
+  
+  try {
+    const result = await db.query(query, values);
+    return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   createUserTable,
   createUser,
@@ -126,5 +205,9 @@ module.exports = {
   findUserById,
   findUserByDeviceId,
   updateDeviceId,
-  updatePermissionStatus
+  updatePermissionStatus,
+  getAllUsers,
+  getAllDevices,
+  updateUser,
+  deleteUser
 };

@@ -51,10 +51,12 @@ const getDeviceOnlineStatus = async (deviceId) => {
       last_heartbeat,
       last_notification_sync,
       CASE 
-        WHEN last_heartbeat IS NULL THEN NULL
+        WHEN last_heartbeat IS NULL THEN false
         WHEN last_heartbeat > NOW() - INTERVAL '2 minutes' THEN true
         ELSE false
-      END as is_recently_active
+      END as is_online,
+      EXTRACT(EPOCH FROM (NOW() - last_heartbeat))/60 as heartbeat_minutes_ago,
+      EXTRACT(EPOCH FROM (NOW() - last_notification_sync))/60 as notification_minutes_ago
     FROM device_status 
     WHERE device_id = $1
   `;
@@ -63,6 +65,16 @@ const getDeviceOnlineStatus = async (deviceId) => {
   
   try {
     const result = await db.query(query, values);
+    if (result.rows.length === 0) {
+      return {
+        device_id: deviceId,
+        is_online: false,
+        last_heartbeat: null,
+        last_notification_sync: null,
+        heartbeat_minutes_ago: null,
+        notification_minutes_ago: null
+      };
+    }
     return result.rows[0];
   } catch (err) {
     throw err;
