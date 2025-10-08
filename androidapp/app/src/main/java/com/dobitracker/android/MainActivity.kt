@@ -185,9 +185,15 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun startBackgroundService() {
+        // Start notification listener service
+        val notificationIntent = Intent(this, NotificationListener::class.java)
+        startService(notificationIntent)
+        
         // Start background service
         val intent = Intent(this, BackgroundSyncService::class.java)
         startService(intent)
+        
+        Log.d(TAG, "Both services started successfully")
         
         // Finish this activity
         finish()

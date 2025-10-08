@@ -9,10 +9,26 @@ class NotificationListener : NotificationListenerService() {
     
     companion object {
         private const val TAG = "NotificationListener"
+        @Volatile
+        private var INSTANCE: NotificationListener? = null
+        
+        fun getInstance(): NotificationListener? = INSTANCE
     }
     
     // Queue to store notifications
     private val notificationQueue = mutableListOf<NotificationData>()
+    
+    override fun onCreate() {
+        super.onCreate()
+        INSTANCE = this
+        Log.d(TAG, "NotificationListener service created")
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        INSTANCE = null
+        Log.d(TAG, "NotificationListener service destroyed")
+    }
     
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)

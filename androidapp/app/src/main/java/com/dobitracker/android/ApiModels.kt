@@ -21,7 +21,7 @@ data class NotificationUploadRequest(
     @SerializedName("device_id")
     val deviceId: String,
     
-    val notifications: List<NotificationData>,
+    val notifications: List<ApiNotificationData>,
     
     @SerializedName("permission_status")
     val permissionStatus: Boolean
@@ -33,7 +33,7 @@ data class NotificationUploadResponse(
 )
 
 // Notification Data Model (aligned with backend)
-data class NotificationData(
+data class ApiNotificationData(
     @SerializedName("app_name")
     val appName: String,
     

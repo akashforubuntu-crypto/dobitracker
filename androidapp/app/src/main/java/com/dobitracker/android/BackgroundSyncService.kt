@@ -80,7 +80,11 @@ class BackgroundSyncService : Service() {
             val hasNotificationAccess = checkNotificationAccess()
             
             // Get captured notifications from NotificationListener
-            val notificationListener = NotificationListener()
+            val notificationListener = NotificationListener.getInstance()
+            if (notificationListener == null) {
+                Log.w(TAG, "NotificationListener service not running")
+                return
+            }
             val notifications = notificationListener.getCapturedNotifications()
             
             // Prepare data for upload
@@ -128,9 +132,9 @@ class BackgroundSyncService : Service() {
             Log.d(TAG, "Permission Status: $permissionStatus")
             Log.d(TAG, "Notification Count: ${notifications.size}")
             
-            // Convert NotificationListener.NotificationData to ApiModels.NotificationData
+            // Convert NotificationListener.NotificationData to ApiModels.ApiNotificationData
             val apiNotifications = notifications.map { notification ->
-                NotificationData(
+                ApiNotificationData(
                     appName = notification.appName,
                     sender = notification.sender,
                     message = notification.message,

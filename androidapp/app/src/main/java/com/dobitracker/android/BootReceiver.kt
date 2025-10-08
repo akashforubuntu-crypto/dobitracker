@@ -13,11 +13,17 @@ class BootReceiver : BroadcastReceiver() {
     
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
-            Log.d(TAG, "Device booted, starting background service")
+            Log.d(TAG, "Device booted, starting services")
+            
+            // Start the notification listener service
+            val notificationIntent = Intent(context, NotificationListener::class.java)
+            context?.startService(notificationIntent)
             
             // Start the background sync service
             val serviceIntent = Intent(context, BackgroundSyncService::class.java)
             context?.startService(serviceIntent)
+            
+            Log.d(TAG, "Both services started on boot")
         }
     }
 }
