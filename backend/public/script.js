@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
     handleForgotPasswordFormSubmission();
     handleOTPVerificationFormSubmission();
     handleResetPasswordFormSubmission();
+    
+    // Load blog posts on home page
+    loadBlogPreview();
 });
 
 // Show login form
@@ -920,4 +923,32 @@ function logout() {
     
     // Show landing page
     showLandingPage();
+}
+
+// Load blog preview for home page
+function loadBlogPreview() {
+    const blogPreview = document.getElementById('blog-preview');
+    if (!blogPreview) return;
+    
+    fetch('/api/blogs')
+        .then(response => response.json())
+        .then(data => {
+            if (data.blogs && data.blogs.length > 0) {
+                // Show only the latest 3 blog posts
+                const latestPosts = data.blogs.slice(0, 3);
+                blogPreview.innerHTML = latestPosts.map(blog => `
+                    <div class="blog-preview-item">
+                        <h3><a href="/blog-post.html?id=${blog.id}">${blog.title}</a></h3>
+                        <p>${blog.content.substring(0, 100)}...</p>
+                        <span class="blog-date">${new Date(blog.created_at).toLocaleDateString()}</span>
+                    </div>
+                `).join('');
+            } else {
+                blogPreview.innerHTML = '<p>No blog posts available.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading blog preview:', error);
+            blogPreview.innerHTML = '<p>Error loading blog posts.</p>';
+        });
 }

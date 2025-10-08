@@ -7,6 +7,20 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    // Add event listeners for tabs
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            showAdminTab(tabName);
+        });
+    });
+    
+    // Add event listener for logout button
+    document.getElementById('admin-logout-btn').addEventListener('click', logout);
+    
+    // Add event listener for create blog button
+    document.getElementById('create-blog-btn').addEventListener('click', showCreateBlogForm);
+    
     // Load initial content
     loadUsers();
     loadDevices();

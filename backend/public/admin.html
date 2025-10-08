@@ -10,15 +10,15 @@
     <div class="admin-container">
         <div class="admin-header">
             <h1>Admin Panel</h1>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <button class="logout-btn" id="admin-logout-btn">Logout</button>
         </div>
         
         <div class="admin-tabs">
-            <div class="admin-tab active" onclick="showAdminTab('users')">Manage Users</div>
-            <div class="admin-tab" onclick="showAdminTab('devices')">Device Status</div>
-            <div class="admin-tab" onclick="showAdminTab('documents')">Documents</div>
-            <div class="admin-tab" onclick="showAdminTab('notifications')">Notifications</div>
-            <div class="admin-tab" onclick="showAdminTab('blog')">Blog Management</div>
+            <div class="admin-tab active" data-tab="users">Manage Users</div>
+            <div class="admin-tab" data-tab="devices">Device Status</div>
+            <div class="admin-tab" data-tab="documents">Documents</div>
+            <div class="admin-tab" data-tab="notifications">Notifications</div>
+            <div class="admin-tab" data-tab="blog">Blog Management</div>
         </div>
         
         <div class="admin-tab-content active" id="users-tab">
@@ -78,7 +78,7 @@
         
         <div class="admin-tab-content" id="blog-tab">
             <h2>Blog Management</h2>
-            <button class="btn primary" onclick="showCreateBlogForm()">Create New Post</button>
+            <button class="btn primary" id="create-blog-btn">Create New Post</button>
             <div id="blog-management">
                 <!-- Blog management will be loaded here -->
             </div>
