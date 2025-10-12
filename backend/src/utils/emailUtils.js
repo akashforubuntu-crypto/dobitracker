@@ -7,74 +7,58 @@ const validateEmailFormat = (email) => {
 
 const sendMojoAuthOTP = async (email) => {
   try {
-    // This is a placeholder implementation
-    // In a real implementation, you would integrate with the MojoAuth API
-    // For now, we'll simulate a successful response
+    console.log('Sending OTP to email:', email);
     
-    // Example MojoAuth API call (commented out):
-    /*
-    const response = await axios.post('https://api.mojoauth.com/email/send', {
+    // Real MojoAuth API implementation using their REST API
+    const response = await axios.post('https://api.mojoauth.com/users/emailotp', {
       email: email,
-      subject: 'DobiTracker Verification Code',
-      message: 'Your verification code is: {{otp}}'
+      language: 'en',
+      redirect_url: 'https://dobitracker-backend.onrender.com'
     }, {
       headers: {
-        'Authorization': `Bearer ${process.env.MOJOAUTH_API_KEY}`,
+        'X-API-Key': process.env.MOJOAUTH_CLIENT_ID,
         'Content-Type': 'application/json'
       }
     });
     
-    return response.data;
-    */
+    console.log('MojoAuth OTP response:', response.data);
     
-    // Simulated response
     return {
       success: true,
       message: 'OTP sent successfully',
-      // In a real implementation, you would get an actual token from MojoAuth
-      token: 'simulated_otp_token_' + Math.random().toString(36).substring(7)
+      state_id: response.data.state_id
     };
   } catch (error) {
-    throw new Error('Failed to send OTP: ' + error.message);
+    console.error('MojoAuth OTP send error:', error.response?.data || error.message);
+    throw new Error('Failed to send OTP: ' + (error.response?.data?.message || error.message));
   }
 };
 
-const verifyMojoAuthOTP = async (email, otp) => {
+const verifyMojoAuthOTP = async (stateId, otp) => {
   try {
-    // This is a placeholder implementation
-    // In a real implementation, you would integrate with the MojoAuth API
-    // For now, we'll simulate a successful response
+    console.log('Verifying OTP for state_id:', stateId);
     
-    // Example MojoAuth API call (commented out):
-    /*
-    const response = await axios.post('https://api.mojoauth.com/email/verify', {
-      email: email,
-      code: otp
+    // Real MojoAuth API implementation for verification
+    const response = await axios.post('https://api.mojoauth.com/users/emailotp/verify', {
+      state_id: stateId,
+      otp: otp
     }, {
       headers: {
-        'Authorization': `Bearer ${process.env.MOJOAUTH_API_KEY}`,
+        'X-API-Key': process.env.MOJOAUTH_CLIENT_ID,
         'Content-Type': 'application/json'
       }
     });
     
-    return response.data;
-    */
-    
-    // Simulated response
-    // In a real implementation, you would verify the OTP with MojoAuth
-    // For simulation, we'll just check if otp is not empty
-    if (!otp) {
-      throw new Error('Invalid OTP');
-    }
+    console.log('MojoAuth OTP verification response:', response.data);
     
     return {
       success: true,
       message: 'OTP verified successfully',
-      // In a real implementation, you would get an actual verification result from MojoAuth
-      verified: true
+      verified: response.data.authenticated || false
     };
   } catch (error) {
-    throw new Error('Failed to verify OTP: ' + error.message);
+    console.error('MojoAuth OTP verify error:', error.response?.data || error.message);
+    throw new Error('Failed to verify OTP: ' + (error.response?.data?.message || error.message));
   }
 };
 

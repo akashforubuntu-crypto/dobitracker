@@ -7,7 +7,6 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "init-db": "node database/initTables.js",
-    "reset-db": "node reset-db.js",
     "init-admin": "node scripts/initAdmin.js",
     "create-sample-blog": "node scripts/createSampleBlogPost.js",
     "create-sample-docs": "node scripts/createSampleDocuments.js",

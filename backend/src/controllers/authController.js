@@ -50,11 +50,12 @@ const signup = async (req, res) => {
     // Generate a temporary signup token
     const signupToken = uuidv4();
     
-    // Store the signup token with user data (expires in 10 minutes)
+    // Store the signup token with user data and MojoAuth state (expires in 10 minutes)
     signupTokens.set(signupToken, {
       name,
       email,
       password,
+      mojoAuthStateId: otpResponse.state_id,
       expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
     });
     
@@ -94,8 +95,8 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({ message: 'Signup token has expired' });
     }
     
-    // Verify OTP via MojoAuth
-    const otpResponse = await verifyMojoAuthOTP(signupData.email, otp);
+    // Verify OTP via MojoAuth using the stored state_id
+    const otpResponse = await verifyMojoAuthOTP(signupData.mojoAuthStateId, otp);
     
     if (!otpResponse.success || !otpResponse.verified) {
       return res.status(400).json({ message: 'Invalid OTP' });
@@ -156,6 +157,11 @@ const login = async (req, res) => {
     // Generate JWT token
     const token = generateToken({ userId: user.id, email: user.email, role: user.role });
     
+    // Calculate device online status (online if synced within last 2 minutes)
+    const now = new Date();
+    const lastSyncTime = user.last_sync_at ? new Date(user.last_sync_at) : null;
+    const isOnline = lastSyncTime && (now - lastSyncTime) < 2 * 60 * 1000; // 2 minutes in milliseconds
+    
     res.status(200).json({
       message: 'Login successful',
       token: token,
@@ -164,7 +170,9 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        deviceId: user.device_id
+        deviceId: user.device_id,
+        isOnline: isOnline,
+        lastSyncAt: user.last_sync_at
       }
     });
   } catch (error) {

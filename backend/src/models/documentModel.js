@@ -20,15 +20,15 @@ const createDocumentsTable = async () => {
 };
 
 const createDocument = async (documentData) => {
-  const { type, content, version = 1 } = documentData;
+  const { type, title, html_content } = documentData;
   
   const query = `
-    INSERT INTO documents (type, content, version)
+    INSERT INTO documents (type, title, html_content)
     VALUES ($1, $2, $3)
-    RETURNING id, type, content, version, updated_at
+    RETURNING id, type, title, html_content, created_at, updated_at
   `;
   
-  const values = [type, content, version];
+  const values = [type, title, html_content];
   
   try {
     const result = await db.query(query, values);
@@ -42,7 +42,7 @@ const getDocumentByType = async (type) => {
   const query = `
     SELECT * FROM documents 
     WHERE type = $1
-    ORDER BY version DESC
+    ORDER BY updated_at DESC
     LIMIT 1
   `;
   
@@ -56,8 +56,24 @@ const getDocumentByType = async (type) => {
   }
 };
 
+const getDocumentById = async (id) => {
+  const query = `
+    SELECT * FROM documents 
+    WHERE id = $1
+  `;
+  
+  const values = [id];
+  
+  try {
+    const result = await db.query(query, values);
+    return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
+
 const getAllDocuments = async () => {
-  const query = 'SELECT * FROM documents ORDER BY type, version DESC';
+  const query = 'SELECT * FROM documents ORDER BY type, updated_at DESC';
   
   try {
     const result = await db.query(query);
@@ -68,16 +84,16 @@ const getAllDocuments = async () => {
 };
 
 const updateDocument = async (id, documentData) => {
-  const { type, content } = documentData;
+  const { title, html_content } = documentData;
   
   const query = `
     UPDATE documents 
-    SET content = $1, version = version + 1, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $2
-    RETURNING id, type, content, version, updated_at
+    SET title = $1, html_content = $2, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $3
+    RETURNING id, type, title, html_content, created_at, updated_at
   `;
   
-  const values = [content, id];
+  const values = [title, html_content, id];
   
   try {
     const result = await db.query(query, values);
@@ -103,6 +119,7 @@ module.exports = {
   createDocumentsTable,
   createDocument,
   getDocumentByType,
+  getDocumentById,
   getAllDocuments,
   updateDocument,
   deleteDocument

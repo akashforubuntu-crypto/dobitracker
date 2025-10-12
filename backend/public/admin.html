@@ -10,19 +10,48 @@
     <div class="admin-container">
         <div class="admin-header">
             <h1>Admin Panel</h1>
-            <button class="logout-btn" id="admin-logout-btn">Logout</button>
+            <button class="logout-btn" id="adminLogoutBtn">Logout</button>
         </div>
         
         <div class="admin-tabs">
             <div class="admin-tab active" data-tab="users">Manage Users</div>
-            <div class="admin-tab" data-tab="devices">Device Status</div>
             <div class="admin-tab" data-tab="documents">Documents</div>
             <div class="admin-tab" data-tab="notifications">Notifications</div>
             <div class="admin-tab" data-tab="blog">Blog Management</div>
+            <div class="admin-tab" data-tab="cleanup">Data Cleanup</div>
         </div>
         
         <div class="admin-tab-content active" id="users-tab">
-            <h2>Manage Users</h2>
+            <div class="users-header">
+                <h2>Manage Users</h2>
+                <div class="users-actions">
+                    <button class="btn primary create-user-btn">Create New User</button>
+                    <div class="search-container">
+                        <input type="text" id="userSearch" placeholder="Search users..." class="search-input">
+                        <button class="btn secondary" id="clearSearch">Clear</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="user-stats">
+                <div class="stat-card">
+                    <h3>Total Users</h3>
+                    <span id="totalUsers">-</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Admin Users</h3>
+                    <span id="adminUsers">-</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Regular Users</h3>
+                    <span id="regularUsers">-</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Users with Devices</h3>
+                    <span id="usersWithDevices">-</span>
+                </div>
+            </div>
+            
             <div class="table-container">
                 <table class="table">
                     <thead>
@@ -32,6 +61,7 @@
                             <th>Email</th>
                             <th>Role</th>
                             <th>Device ID</th>
+                            <th>Status</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
@@ -43,24 +73,6 @@
             </div>
         </div>
         
-        <div class="admin-tab-content" id="devices-tab">
-            <h2>Device Status</h2>
-            <div class="table-container">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Device ID</th>
-                            <th>User Name</th>
-                            <th>Last Sync</th>
-                            <th>Permission Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="devices-table-body">
-                        <!-- Device data will be loaded here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
         
         <div class="admin-tab-content" id="documents-tab">
             <h2>Documents</h2>
@@ -71,20 +83,81 @@
         
         <div class="admin-tab-content" id="notifications-tab">
             <h2>Notifications</h2>
-            <div id="notifications-management">
-                <!-- Notifications management will be loaded here -->
+            <div class="user-selection">
+                <label for="user-id-input">Enter User ID:</label>
+                <input type="text" id="user-id-input" placeholder="Enter user ID to view notifications" value="1">
+                <button class="btn primary" id="load-notifications-btn">Load Notifications</button>
+            </div>
+            
+            <div class="notification-tabs" id="notification-tabs" style="display: none;">
+                <div class="notification-tab active" data-app="">All Apps</div>
+                <div class="notification-tab" data-app="WhatsApp">WhatsApp</div>
+                <div class="notification-tab" data-app="Instagram">Instagram</div>
+                <div class="notification-tab" data-app="other">Other Apps</div>
+            </div>
+            
+            <div class="notifications-container" id="notifications-container" style="display: none;">
+                <div class="notifications-list" id="notifications-list">
+                    <!-- Notifications will be loaded here -->
+                </div>
+                
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be loaded here -->
+                </div>
             </div>
         </div>
         
         <div class="admin-tab-content" id="blog-tab">
             <h2>Blog Management</h2>
-            <button class="btn primary" id="create-blog-btn">Create New Post</button>
+            <button class="btn primary" id="createBlogBtn">Create New Post</button>
             <div id="blog-management">
                 <!-- Blog management will be loaded here -->
             </div>
         </div>
+        
+        <div class="admin-tab-content" id="cleanup-tab">
+            <div class="cleanup-header">
+                <h2>Notification Cleanup</h2>
+                <p class="cleanup-description">Delete notifications older than a specific date to manage database storage.</p>
+            </div>
+            
+            <div class="cleanup-form">
+                <div class="form-group">
+                    <label for="cleanup-date">Delete notifications older than:</label>
+                    <input type="date" id="cleanup-date" class="date-input">
+                    <small class="form-help">Select a date. All notifications created before this date will be deleted.</small>
+                </div>
+                
+                <div class="cleanup-actions">
+                    <button class="btn secondary" id="preview-cleanup-btn">Preview Cleanup</button>
+                    <button class="btn danger" id="execute-cleanup-btn" disabled>Execute Cleanup</button>
+                </div>
+            </div>
+            
+            <div class="cleanup-preview" id="cleanup-preview" style="display: none;">
+                <div class="preview-card">
+                    <h3>Cleanup Preview</h3>
+                    <div class="preview-info">
+                        <p><strong>Selected Date:</strong> <span id="preview-date"></span></p>
+                        <p><strong>Notifications to Delete:</strong> <span id="preview-count" class="count-badge">0</span></p>
+                        <p class="warning-text">⚠️ This action cannot be undone. Please review carefully before proceeding.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cleanup-results" id="cleanup-results" style="display: none;">
+                <div class="results-card">
+                    <h3>Cleanup Results</h3>
+                    <div class="results-info">
+                        <p><strong>Date:</strong> <span id="results-date"></span></p>
+                        <p><strong>Notifications Deleted:</strong> <span id="results-count" class="count-badge success">0</span></p>
+                        <p class="success-text">✅ Cleanup completed successfully!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
-    <script src="admin-script.js"></script>
+    <script src="admin-script.js?v=20251021"></script>
 </body>
 </html>

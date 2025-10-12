@@ -12,7 +12,8 @@ const createUserTable = async () => {
       device_id UUID UNIQUE,
       android_id TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      permission_status BOOLEAN DEFAULT TRUE
+      permission_status BOOLEAN DEFAULT TRUE,
+      last_sync_at TIMESTAMP DEFAULT NULL
     )
   `;
   
@@ -142,31 +143,7 @@ const getAllUsers = async () => {
   }
 };
 
-const getAllDevices = async () => {
-  const query = `
-    SELECT 
-      u.device_id,
-      u.name as user_name,
-      u.permission_status,
-      u.created_at,
-      ds.is_online,
-      ds.last_heartbeat,
-      ds.last_notification_sync
-    FROM users u
-    LEFT JOIN device_status ds ON u.device_id = ds.device_id
-    WHERE u.device_id IS NOT NULL
-    ORDER BY u.created_at DESC
-  `;
-  
-  try {
-    const result = await db.query(query);
-    return result.rows;
-  } catch (err) {
-    throw err;
-  }
-};
-
-const updateUser = async (userId, userData) => {
+const updateUser = async (id, userData) => {
   const { name, email, role } = userData;
   
   const query = `
@@ -176,7 +153,7 @@ const updateUser = async (userId, userData) => {
     RETURNING id, name, email, role, device_id, android_id, created_at, permission_status
   `;
   
-  const values = [name, email, role, userId];
+  const values = [name, email, role, id];
   
   try {
     const result = await db.query(query, values);
@@ -186,14 +163,44 @@ const updateUser = async (userId, userData) => {
   }
 };
 
-const deleteUser = async (userId) => {
+const deleteUser = async (id) => {
   const query = 'DELETE FROM users WHERE id = $1 RETURNING id';
-  const values = [userId];
+  const values = [id];
   
   try {
     const result = await db.query(query, values);
     return result.rows[0];
   } catch (err) {
+    throw err;
+  }
+};
+
+const updateLastSyncTime = async (deviceId) => {
+  const query = `
+    UPDATE users 
+    SET last_sync_at = CURRENT_TIMESTAMP 
+    WHERE device_id = $1
+    RETURNING id, last_sync_at
+  `;
+  
+  const values = [deviceId];
+  
+  try {
+    const result = await db.query(query, values);
+    return result.rows[0];
+  } catch (err) {
+    throw err;
+  }
+};
+
+const addLastSyncColumn = async () => {
+  const query = 'ALTER TABLE users ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMP DEFAULT NULL';
+  
+  try {
+    await db.query(query);
+    console.log('Added last_sync_at column to users table');
+  } catch (err) {
+    console.error('Error adding last_sync_at column:', err);
     throw err;
   }
 };
@@ -207,7 +214,8 @@ module.exports = {
   updateDeviceId,
   updatePermissionStatus,
   getAllUsers,
-  getAllDevices,
   updateUser,
-  deleteUser
+  deleteUser,
+  updateLastSyncTime,
+  addLastSyncColumn
 };

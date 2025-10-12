@@ -1,6 +1,7 @@
 const { 
   createDocument, 
   getDocumentByType, 
+  getDocumentById: getDocumentByIdFromModel,
   getAllDocuments, 
   updateDocument, 
   deleteDocument 
@@ -8,15 +9,15 @@ const {
 
 const createDocumentHandler = async (req, res) => {
   try {
-    const { type, content } = req.body;
+    const { type, title, html_content } = req.body;
     
     // Validate input
-    if (!type || !content) {
-      return res.status(400).json({ message: 'Type and content are required' });
+    if (!type || !title || !html_content) {
+      return res.status(400).json({ message: 'Type, title, and html_content are required' });
     }
     
     // Create document
-    const document = await createDocument({ type, content });
+    const document = await createDocument({ type, title, html_content });
     
     res.status(201).json({
       message: 'Document created successfully',
@@ -54,6 +55,32 @@ const getDocument = async (req, res) => {
   }
 };
 
+const getDocumentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validate input
+    if (!id) {
+      return res.status(400).json({ message: 'Document ID is required' });
+    }
+    
+    // Get document by ID
+    const document = await getDocumentByIdFromModel(id);
+    
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+    
+    res.status(200).json({
+      message: 'Document fetched successfully',
+      document: document
+    });
+  } catch (error) {
+    console.error('Get document by ID error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 const getAllDocumentsHandler = async (req, res) => {
   try {
     // Get all documents
@@ -72,19 +99,19 @@ const getAllDocumentsHandler = async (req, res) => {
 const updateDocumentHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, content } = req.body;
+    const { title, html_content } = req.body;
     
     // Validate input
     if (!id) {
       return res.status(400).json({ message: 'Document ID is required' });
     }
     
-    if (!type || !content) {
-      return res.status(400).json({ message: 'Type and content are required' });
+    if (!title || !html_content) {
+      return res.status(400).json({ message: 'Title and html_content are required' });
     }
     
     // Update document
-    const document = await updateDocument(id, { type, content });
+    const document = await updateDocument(id, { title, html_content });
     
     if (!document) {
       return res.status(404).json({ message: 'Document not found' });
@@ -128,6 +155,7 @@ const deleteDocumentHandler = async (req, res) => {
 module.exports = {
   createDocumentHandler,
   getDocument,
+  getDocumentById,
   getAllDocumentsHandler,
   updateDocumentHandler,
   deleteDocumentHandler

@@ -50,7 +50,7 @@ const createMultipleNotifications = async (notifications) => {
     for (const notification of notifications) {
       const values = [
         notification.deviceId,
-        notification.appName,
+        notification.app_name || notification.appName, // Handle both API field names
         notification.sender,
         notification.message,
         notification.timestamp || new Date()
@@ -98,10 +98,178 @@ const getAllNotificationsByDeviceId = async (deviceId) => {
   }
 };
 
+// Paginated version of getAllNotificationsByDeviceId
+const getAllNotificationsByDeviceIdPaginated = async (deviceId, limit, offset) => {
+  const query = `
+    SELECT * FROM notifications 
+    WHERE device_id = $1
+    ORDER BY timestamp DESC
+    LIMIT $2 OFFSET $3
+  `;
+  
+  const values = [deviceId, limit, offset];
+  
+  try {
+    const result = await db.query(query, values);
+    return result.rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Get count of notifications for a device
+const getNotificationCountByDeviceId = async (deviceId) => {
+  const query = `
+    SELECT COUNT(*) as count
+    FROM notifications 
+    WHERE device_id = $1
+  `;
+  
+  const values = [deviceId];
+  
+  try {
+    const result = await db.query(query, values);
+    return parseInt(result.rows[0].count);
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Paginated version of getNotificationsByDeviceIdAndApp
+const getNotificationsByDeviceIdAndAppPaginated = async (deviceId, appName, limit, offset) => {
+  const query = `
+    SELECT * FROM notifications 
+    WHERE device_id = $1 AND app_name = $2
+    ORDER BY timestamp DESC
+    LIMIT $3 OFFSET $4
+  `;
+  
+  const values = [deviceId, appName, limit, offset];
+  
+  try {
+    const result = await db.query(query, values);
+    return result.rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Get count of notifications for a device and app
+const getNotificationCountByDeviceIdAndApp = async (deviceId, appName) => {
+  const query = `
+    SELECT COUNT(*) as count
+    FROM notifications 
+    WHERE device_id = $1 AND app_name = $2
+  `;
+  
+  const values = [deviceId, appName];
+  
+  try {
+    const result = await db.query(query, values);
+    return parseInt(result.rows[0].count);
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Get notifications for "other" apps (NOT WhatsApp or Instagram) with pagination
+const getNotificationsByDeviceIdForOtherAppsPaginated = async (deviceId, limit, offset) => {
+  const query = `
+    SELECT * FROM notifications 
+    WHERE device_id = $1 AND app_name NOT IN ('WhatsApp', 'Instagram')
+    ORDER BY timestamp DESC
+    LIMIT $2 OFFSET $3
+  `;
+  
+  const values = [deviceId, limit, offset];
+  
+  try {
+    const result = await db.query(query, values);
+    return result.rows;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Get count of notifications for "other" apps (NOT WhatsApp or Instagram)
+const getNotificationCountByDeviceIdForOtherApps = async (deviceId) => {
+  const query = `
+    SELECT COUNT(*) as count
+    FROM notifications 
+    WHERE device_id = $1 AND app_name NOT IN ('WhatsApp', 'Instagram')
+  `;
+  
+  const values = [deviceId];
+  
+  try {
+    const result = await db.query(query, values);
+    return parseInt(result.rows[0].count);
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Get count of notifications older than a specific date (for cleanup preview)
+const getNotificationCountOlderThanDate = async (cutoffDate) => {
+  const query = `
+    SELECT COUNT(*) as count
+    FROM notifications 
+    WHERE timestamp < $1
+  `;
+  
+  const values = [cutoffDate];
+  
+  try {
+    const result = await db.query(query, values);
+    return parseInt(result.rows[0].count);
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Delete notifications older than a specific date (for cleanup execution)
+const deleteNotificationsOlderThanDate = async (cutoffDate) => {
+  // First, get the count of notifications to be deleted
+  const countQuery = `
+    SELECT COUNT(*) as count
+    FROM notifications 
+    WHERE timestamp < $1
+  `;
+  
+  // Then delete the notifications
+  const deleteQuery = `
+    DELETE FROM notifications 
+    WHERE timestamp < $1
+  `;
+  
+  const values = [cutoffDate];
+  
+  try {
+    // Get the count first
+    const countResult = await db.query(countQuery, values);
+    const countToDelete = parseInt(countResult.rows[0].count);
+    
+    // Perform the deletion
+    await db.query(deleteQuery, values);
+    
+    return countToDelete;
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   createNotificationsTable,
   createNotification,
   createMultipleNotifications,
   getNotificationsByDeviceIdAndApp,
-  getAllNotificationsByDeviceId
+  getAllNotificationsByDeviceId,
+  getAllNotificationsByDeviceIdPaginated,
+  getNotificationCountByDeviceId,
+  getNotificationsByDeviceIdAndAppPaginated,
+  getNotificationCountByDeviceIdAndApp,
+  getNotificationsByDeviceIdForOtherAppsPaginated,
+  getNotificationCountByDeviceIdForOtherApps,
+  getNotificationCountOlderThanDate,
+  deleteNotificationsOlderThanDate
 };

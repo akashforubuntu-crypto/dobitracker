@@ -66,10 +66,16 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun verifyDevice() {
-        val deviceId = deviceIdInput.text.toString()
+        val deviceId = deviceIdInput.text.toString().trim()
         
         if (deviceId.isEmpty()) {
             Toast.makeText(this, "Please enter Device ID", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        // Validate UUID format (basic check)
+        if (deviceId.length < 30 || !deviceId.contains("-")) {
+            Toast.makeText(this, "Invalid Device ID format", Toast.LENGTH_SHORT).show()
             return
         }
         
@@ -126,7 +132,9 @@ class MainActivity : AppCompatActivity() {
                 val errorMessage = when (response.code()) {
                     404 -> "Device ID not found. Please check your Device ID."
                     403 -> "Device ID is linked to another Android device. Contact admin."
-                    else -> "Verification failed. Please try again."
+                    400 -> "Invalid request. Please check your Device ID format."
+                    500 -> "Server error. Please try again later."
+                    else -> "Verification failed (${response.code()}). Please try again."
                 }
                 
                 runOnUiThread {

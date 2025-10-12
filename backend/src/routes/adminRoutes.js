@@ -1,25 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const { 
-  getAllUsers,
+  getAllUsersHandler,
   getUserById,
-  updateUserRole,
-  getDeviceStatus,
+  updateUserHandler,
   getNotificationsForUser,
-  createUser,
-  updateUser,
-  deleteUser
+  deleteUserHandler,
+  createUserHandler,
+  previewCleanup,
+  executeCleanup
 } = require('../controllers/adminController');
 const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware');
 
 // Admin routes (all require authentication and admin role)
-router.get('/users', authenticate, authorizeAdmin, getAllUsers);
+router.get('/users', authenticate, authorizeAdmin, getAllUsersHandler);
+router.post('/users', authenticate, authorizeAdmin, createUserHandler);
 router.get('/users/:id', authenticate, authorizeAdmin, getUserById);
-router.post('/users', authenticate, authorizeAdmin, createUser);
-router.put('/users/:id', authenticate, authorizeAdmin, updateUser);
-router.put('/users/:id/role', authenticate, authorizeAdmin, updateUserRole);
-router.delete('/users/:id', authenticate, authorizeAdmin, deleteUser);
-router.get('/devices', authenticate, authorizeAdmin, getDeviceStatus);
-router.get('/notifications/:deviceId', authenticate, authorizeAdmin, getNotificationsForUser);
+router.put('/users/:id', authenticate, authorizeAdmin, updateUserHandler);
+router.delete('/users/:id', authenticate, authorizeAdmin, deleteUserHandler);
+router.get('/notifications/:userId', authenticate, authorizeAdmin, getNotificationsForUser);
+
+// Cleanup routes
+router.post('/cleanup/preview', authenticate, authorizeAdmin, previewCleanup);
+router.post('/cleanup/execute', authenticate, authorizeAdmin, executeCleanup);
 
 module.exports = router;

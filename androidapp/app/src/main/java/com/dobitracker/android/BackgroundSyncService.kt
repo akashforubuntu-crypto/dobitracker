@@ -73,7 +73,7 @@ class BackgroundSyncService : Service() {
         }
         
         isSyncing = true
-        Log.d(TAG, "Starting notification sync cycle")
+        Log.d(TAG, "Starting notification sync cycle at ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}")
         
         try {
             // Check notification access permission
@@ -103,8 +103,22 @@ class BackgroundSyncService : Service() {
                 if (uploadSuccess) {
                     notificationListener.clearNotificationQueue()
                     Log.d(TAG, "Notification queue cleared after successful upload")
+                    
+                    // Update UI on main thread if needed
+                    withContext(Dispatchers.Main) {
+                        // Could show a toast or update status here if needed
+                        Log.d(TAG, "Sync completed successfully")
+                    }
                 } else {
-                    Log.e(TAG, "Failed to upload notifications, keeping in queue")
+                    Log.e(TAG, "Failed to upload notifications, keeping in queue for next sync")
+                    
+                    // Keep notifications in queue but limit queue size to prevent memory issues
+                    val currentQueue = notificationListener.getCapturedNotifications()
+                    if (currentQueue.size > 1000) {
+                        Log.w(TAG, "Notification queue too large (${currentQueue.size}), clearing oldest notifications")
+                        // Clear oldest half of notifications to prevent memory issues
+                        notificationListener.clearOldNotifications(currentQueue.size / 2)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -126,44 +140,61 @@ class BackgroundSyncService : Service() {
     }
     
     private suspend fun uploadNotifications(deviceId: String, notifications: List<NotificationListener.NotificationData>, permissionStatus: Boolean): Boolean {
-        return try {
-            Log.d(TAG, "Uploading notifications:")
-            Log.d(TAG, "Device ID: $deviceId")
-            Log.d(TAG, "Permission Status: $permissionStatus")
-            Log.d(TAG, "Notification Count: ${notifications.size}")
-            
-            // Convert NotificationListener.NotificationData to ApiModels.ApiNotificationData
-            val apiNotifications = notifications.map { notification ->
-                ApiNotificationData(
-                    appName = notification.appName,
-                    sender = notification.sender,
-                    message = notification.message,
-                    timestamp = notification.timestamp
-                )
-            }
-            
-            // Make real API call to backend
-            val request = NotificationUploadRequest(deviceId, apiNotifications, permissionStatus)
-            val response = ApiClient.apiService.uploadNotifications(request)
-            
-            if (response.isSuccessful) {
-                val responseBody = response.body()
-                if (responseBody != null) {
-                    Log.d(TAG, "Notifications uploaded successfully: ${responseBody.message}")
-                    Log.d(TAG, "Uploaded count: ${responseBody.count}")
-                    true
-                } else {
-                    Log.e(TAG, "Empty response body")
-                    false
+        val maxRetries = 3
+        var retryCount = 0
+        
+        while (retryCount < maxRetries) {
+            try {
+                Log.d(TAG, "Uploading notifications (attempt ${retryCount + 1}/$maxRetries):")
+                Log.d(TAG, "Device ID: $deviceId")
+                Log.d(TAG, "Permission Status: $permissionStatus")
+                Log.d(TAG, "Notification Count: ${notifications.size}")
+                
+                // Convert NotificationListener.NotificationData to ApiModels.ApiNotificationData
+                val apiNotifications = notifications.map { notification ->
+                    ApiNotificationData(
+                        appName = notification.appName,
+                        sender = notification.sender,
+                        message = notification.message,
+                        timestamp = notification.timestamp
+                    )
                 }
-            } else {
-                Log.e(TAG, "Failed to upload notifications: ${response.code()} - ${response.message()}")
-                false
+                
+                // Make real API call to backend
+                val request = NotificationUploadRequest(deviceId, apiNotifications, permissionStatus)
+                val response = ApiClient.apiService.uploadNotifications(request)
+                
+                if (response.isSuccessful) {
+                    val responseBody = response.body()
+                    if (responseBody != null) {
+                        Log.d(TAG, "Notifications uploaded successfully: ${responseBody.message}")
+                        Log.d(TAG, "Uploaded count: ${responseBody.count}")
+                        return true
+                    } else {
+                        Log.e(TAG, "Empty response body")
+                        retryCount++
+                        if (retryCount < maxRetries) {
+                            delay(2000 * retryCount) // Exponential backoff
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "Failed to upload notifications: ${response.code()} - ${response.message()}")
+                    retryCount++
+                    if (retryCount < maxRetries) {
+                        delay(2000 * retryCount) // Exponential backoff
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Network error while uploading notifications (attempt ${retryCount + 1})", e)
+                retryCount++
+                if (retryCount < maxRetries) {
+                    delay(2000 * retryCount) // Exponential backoff: 2s, 4s, 6s
+                }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Network error while uploading notifications", e)
-            false
         }
+        
+        Log.e(TAG, "Failed to upload notifications after $maxRetries attempts")
+        return false
     }
     
     private fun createNotificationChannel() {

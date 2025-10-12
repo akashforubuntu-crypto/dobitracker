@@ -3,6 +3,7 @@ const router = express.Router();
 const { 
   createDocumentHandler,
   getDocument,
+  getDocumentById,
   getAllDocumentsHandler,
   updateDocumentHandler,
   deleteDocumentHandler
@@ -14,6 +15,7 @@ router.get('/', getAllDocumentsHandler);
 router.get('/:type', getDocument);
 
 // Admin routes for managing documents (require authentication and admin role)
+router.get('/admin/:id', authenticate, authorizeAdmin, getDocumentById);
 router.post('/', authenticate, authorizeAdmin, createDocumentHandler);
 router.put('/:id', authenticate, authorizeAdmin, updateDocumentHandler);
 router.delete('/:id', authenticate, authorizeAdmin, deleteDocumentHandler);
